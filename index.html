@@ -1,0 +1,76 @@
+<!doctype html>
+
+<html ng-app="xwordApp">
+
+<head>
+    <!--script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.7.2/angular.min.js"></script-->
+    <script src="angular.min.js"></script>
+    <!--script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.10/lodash.min.js"></script-->
+    <script src="lodash.min.js"></script>
+    <script src="xword-services.js"></script>
+    <script src="xword-controller.js"></script>
+    <script src="xword-directives.js"></script>
+    <script src="xword-filters.js"></script>
+    <link rel="stylesheet" href="xword.css">
+</head>
+
+<body ng-controller="XwordController" ng-keydown="keydown($event)" ng-keyup="keyup($event)">
+
+<div class="titles">
+    <p><span class="title">{{ puzzle.title }}</span> <span class="author">by {{ puzzle.author }}</span></p>
+    <p><span class="copyright">{{ puzzle.copyright }}</span></p>
+</div>
+<div class="clock">
+    {{ time | timer }} <span ng-show="solved">SOLVED!</span>
+    <input type="checkbox" ng-model="isDiagramless"> diagramless
+</div>
+<div class="current-clue">
+    <span class="number">{{ currentClue().number }}{{ dir(currentClue().direction) }}</span>
+    {{ currentClue().clue }}
+</div>
+    <div class="grid-and-clue-lists" dropzone file-data="draggedPuzzle" mime-types="application/x-crossword" max-size="1">
+    <div class="grid">
+        <table id="board" tabindex="0" ng-blur="cursorHidden=true" ng-focus="cursorHidden=false">
+            <tr ng-repeat="row in range(puzzle.height)">
+                <td ng-repeat="cell in range(row * puzzle.width, (row + 1) * puzzle.width)"
+                    ng-class="{ black: isBlack(cell), cursor: cursorAt(cell), selected: isSelected(cell), focus: isFocus(cell), good: solved || checksRight(cell), bad: checksWrong(cell) }"
+                    ng-click="setCursor(cell)"
+                    id="cell{{cell}}">
+                    <div class="circle" ng-show="circleAt(cell)"></div>
+                    <div class="content">
+                        <span fit-text>{{ guessAt(cell) }}</span>
+                    </div>
+                    <div class="label" ng-show="numberAt(cell)">
+                        {{ numberAt(cell) }}
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div> <!-- #grid -->
+    <div class="clue-lists">
+        <div ng-repeat="dir in [ACROSS, DOWN]" class="clues" id="{dir}">
+            <h1>{{dir}}</h1>
+            <div class="scroller" id="{{dir}}-scroller">
+                <table>
+                    <tr ng-repeat="clue in puzzle.clues | filter: { direction: dir }"
+                        ng-class="{ lit: currentClue(dir).number == clue.number, secondary: direction() !== dir }"
+                        visible-when-lit="{{dir}}-scroller"
+                        id="#{{dir}}{{clue.number}}">
+                        <td class="marker"></td>
+                        <td class="number">{{ clue.number }}</td>
+                        <td class="clue">{{ clue.clue }}</td>
+                    </tr>
+                </table>
+            </div> <!-- .scroller -->
+        </div> <!-- .clues -->
+    </div> <!-- .clue-lists -->
+</div> <!-- .grid-and-clue-lists -->
+<div class="help">
+    <p>alt-return: check puzzle | ?: reveal square | alt-r: reset | esc: undo</p>
+</div>
+<div class="empty-dropzone" mime-types="application/x-crossword" max-size="1" file-data="draggedPuzzle">Drop Files Here</div>
+<div id="rebus" align-with="cell{{cursor}}" ng-show="rebusEntry"><input id="rebusInput" ng-bind="rebus"></div>
+<span id="fit-text-render"></span>
+</body>
+
+</html>
